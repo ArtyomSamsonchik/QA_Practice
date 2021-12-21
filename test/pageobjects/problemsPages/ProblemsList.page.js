@@ -11,34 +11,45 @@ class ProblemsPage extends Page {
     return $('//button[@id="nav-bar-toggle"]');
   }
   get sortButtons() {
-    return $$('//button[@title="Sort"]');
+    return $('//div[@role="row"][*//button[@title="Sort"]]');
   }
   get kebabButtons() {
-    return $$('//button[@title="Menu"]');
+    //return $$('//button[@title="Menu"]');
+    return $('//div[@role="row"][*//button[@title="Menu"]]');
   }
-  get columnsButton() {
-    return $('//button[text()="Columns"]');
+  get toolbar() {
+    return $('//button[@aria-label="Select columns"]/..');
   }
-  get toolbarButtons() {
-    return $$('//button[text()="Columns"]/../child::*');
+  get problemsList() {
+    return $('//div[@data-rowindex="0"]/..');
   }
-  get problemsArray() {
-    return $$('//*[@data-rowindex=0]/../*');
-  }
-  get firstProblem() {
-    return $('//*[@data-rowindex=0]')
+  get example() {
+    return $$('//div[button[@aria-label="Select columns"]]/*');
   }
   
   async openViaSidebar(pageName) {
+    pageName = await pageName.toLowerCase();
     await this.burgerButton.click();
     await $(`//a[@href="/${pageName}"]`).click();
   }
-  async openToolbarMenu(button) {
-    button = button[0].toUpperCase() + button.slice(1);
-    // await this.toolbarButtons
-    //   .find(el => el.getText().includes(button))
-    //   .click();
-    await this.toolbarButtons.$(`[text()="${button}"]`).click();
+
+  async openToolbarMenu(title) {
+    title = await title.toUpperCase();
+    let button;
+    await this.toolbar.$$('./*').forEach(el => {
+      //el.getText().then(console.log);
+      el.getText().then(result => {
+          if (result.includes(title)) return button = el;
+      }).then(result => result.click());
+    });
+    return $('//div[@role="tooltip"]');
+    //return button;
+  }
+
+  waitFor(time) {
+    return new Promise(resolve => {
+      setTimeout(resolve, time);
+    });
   }
 }
 
