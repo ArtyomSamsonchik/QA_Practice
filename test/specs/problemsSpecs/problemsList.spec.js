@@ -1,6 +1,8 @@
 const LoginPage = require('../../pageobjects/Login.page');
 const LoginData = require('../../../data/login.data');
 const ProblemsListPage = require('../../pageobjects/ProblemsPages/ProblemsList.page');
+const { waitFor } = require('../../pageobjects/ProblemsPages/ProblemsList.page');
+const { resolveObjectURL } = require('buffer');
 
 describe("ProblemsList page tests", () => {
   xit("Goto problems page", async () => {
@@ -20,25 +22,84 @@ describe("ProblemsList page tests", () => {
     await LoginPage.login(email, password);
     await ProblemsListPage.openViaSidebar("problems");
 
-    let arr = await ProblemsListPage.problemsArray;
-    await expect(arr).toBeElementsArrayOfSize(10);
+    let arr = await ProblemsListPage.problemsList.$$('./*');
+    //await expect(list).toBeExisting();
+    await expect(arr).toBeElementsArrayOfSize({lte: 10});
   });
 
-  it("Open first problem page", async () => {
+  xit("Work with arrays", async () => {
     let {email, password} = LoginData.artyomCredentials;
     await LoginPage.open();
     await LoginPage.login(email, password);
     await ProblemsListPage.openViaSidebar("problems");
 
-    //let x = await ProblemsListPage.firstProblem.getAttribute("data-id");
+    const x = await ProblemsListPage.example;
+    //await expect(x).toBeElementsArrayOfSize(4);
+    await x[0].$('.//span').getAttribute("class");
+  });
 
-    //let problems = await $$('//*[@data-rowindex=0]/../*').getAttribute("role");
-    //let problem = await $$('//*[@data-rowindex=0]/../*').find(el => el.getAttribute("role"));
+  xit("Open test toolbar menu", async () => {
+    let {email, password} = LoginData.artyomCredentials;
+    await LoginPage.open();
+    await LoginPage.login(email, password);
+    await ProblemsListPage.openViaSidebar("problems");
 
-    let problem = await $('//*[@data-rowindex=0]');
-    await expect (problem).toHaveAttribute("role", "row");
+    let menu = await ProblemsListPage.openToolbarMenu("columns");
+    //await expect(menu).toBeExisting();
+    await expect(menu).toHaveAttribute("role", "tooltip");
+    await waitFor(2000);
+  });
 
-    //let [problem, user] = await ProblemsListPage.problemsArray.$('//a');
-    //await ProblemsListPage.problemsArray[0].$('//a[1]').click();
-  })
+
+
+  xit("Practise test for array locator", async () => {
+    let {email, password} = LoginData.artyomCredentials;
+    await LoginPage.open();
+    await LoginPage.login(email, password);
+    await ProblemsListPage.openViaSidebar("problems");
+
+    await ProblemsListPage.sortButtons.$$('.//button[@title="Sort"]')
+      .forEach(() => console.log("Hello"));
+  });
+
+  it("Siple tests", async () => {
+    await browser.url('http://www.xml2selenium.com/xpath/');
+    let menuButtons = await $$('//nav/ul/li');
+    //----------------Exprloring---------------------------
+    //await expect(arr).toBeElementsArrayOfSize(8);
+    //await arr.forEach(el => console.log(el.getText()));
+    //await menuButtons[0].$('./a').getHTML();
+    //await menuButtons[0].getHTML();
+
+    //------------------Nice--------------------------
+    // let arr = menuButtons.map(el => el.getText());
+    // let href;
+    // await Promise.all(arr).then(textArr => {
+    //   return textArr.map((el, i) => [menuButtons[i], el]);
+    // }).then(result => {
+    //   [href] = result.find(([, text]) => text.includes("News"));
+    // });
+    //-----------------Wrong----------------------------------------
+    let map = new Map(menuButtons.map(el => [el, el.getText()]));
+    let href;
+    await Promise.all(map.values()).then(textArr => {
+      console.log(textArr);
+      let buttons = Array.from(map.keys());
+      href = buttons[ textArr.findIndex(el => el.includes("News")) ];
+    });
+    //-------------------Wrong-----------------------
+    //let arr = menuButtons.map(el => [el, el.getText()]);
+    // let href = arr.find( ([, promise]) => {
+    //   let succes = false;
+    //   promise.then(result => {
+    //     if (result.includes("News")) succes = true;
+    //     console.log(succes, Array.isArray(arr));
+    //   });
+    //   return succes;
+    // });
+
+
+    //await expect(href.$('./a')).toBeClickable();
+    await expect(href.$('./a')).toHaveText("hjg");
+  });
 });
