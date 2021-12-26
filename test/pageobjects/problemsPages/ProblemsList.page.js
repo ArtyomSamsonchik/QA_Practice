@@ -1,7 +1,7 @@
 const Page = require("../Page");
 
 class ProblemsPage extends Page {
-  get btnNewProblem() {
+  get newProblemButton() {
     return $('//button[text()="New Problem"]');
   }
   get pageTitle() {
