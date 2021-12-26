@@ -5,8 +5,8 @@ class PublicationsPage extends Page {
     return $("h6");
   }
 
-  open() {
-    return super.open("/publications");
+  async open() {
+    await super.open("/publications");
   }
 }
 
