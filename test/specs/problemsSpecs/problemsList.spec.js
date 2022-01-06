@@ -2,7 +2,8 @@ const LoginPage = require('../../pageobjects/Login.page');
 const LoginData = require('../../../data/login.data');
 const ProblemsListPage = require('../../pageobjects/problemsPages/ProblemsList.page');
 const PublicationsPage = require('../../pageobjects/Publications.page');
-//const axios = require('../../../methods/axios.APImethods');
+const axios = require('../../../methods/axios.APImethods');
+const faker = require('faker');
 
 describe("ProblemsList page tests", () => {
   before(async () => {
@@ -33,26 +34,25 @@ describe("ProblemsList page tests", () => {
     await expect(await prevPageButton).not.toBeClickable();
   })
 
-  it("Goto next problems page", async () => {
-    let {firstProblem
-      , nextPageButton
-      , getProblemId
-    } = ProblemsListPage;
+  it.only("Goto next problems page", async () => {
+    
+    await expect(ProblemsListPage.nextPageButton).toBeClickable();
 
-    await nextPageButton.isClickable;
+    let resultArr = await ProblemsListPage.getFullProblemsList();
 
-    let promiseArr = (await firstProblem.$$('./../*')).map(async el => await getProblemId(el));
-    let prevPageIdArr = await Promise.all(promiseArr);
+    let idArr = await Promise.all(
+      resultArr.map(async el => await ProblemsListPage.getProblemId(el))
+    );
 
-    await nextPageButton.click();
-    await firstProblem.waitForExist();
+    await ProblemsListPage.nextPageButton.click();
+    await ProblemsListPage.getFullProblemsList();
 
-    for (let id of prevPageIdArr) {
+    for (let id of idArr) {
       await expect(await $(`//div[@data-id="${id}"]`)).not.toBeExisting();
     }
   });
 
-  it.only("Goto previous problems page" , async () => {
+  it("Goto previous problems page" , async () => {
     let {firstProblem
       , nextPageButton
       , prevPageButton
