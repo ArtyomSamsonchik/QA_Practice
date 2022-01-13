@@ -50,18 +50,33 @@ async function login(email, password) {
       );
     }
 
-    console.log(JSON.stringify(data, null, 2));
+    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
     return data; 
-    //Можно переделать проброс на более информативный
+    //Можно переделать проброс на более информативный, доваить имя ф-ции
   } catch(error) { throw error; }
 }
 
-async function createProblem(accessToken, problemObj) {
+async function createProblem(accessToken, problemQueryData) {
   let requestData = JSON.stringify({
     query: `mutation problemCreate ($data: ProblemInput) {
-      problemCreate (data: $data)
+      problemCreate (data: $data) {
+          _id
+          title
+          content
+          company {
+              _id
+              title
+              description
+              image
+              link
+          }
+          jobTitle
+          owner {
+              _id
+          }
+      }
   }`,
-    variables: {"data": problemObj}
+    variables: {"data": problemQueryData}
   });
 
   try {
@@ -81,40 +96,187 @@ async function createProblem(accessToken, problemObj) {
       );
     }
 
-    console.log(JSON.stringify(data, null, 2));
+    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
     return data; 
 
   } catch(error) { throw error; }
 }
 
-async function createRandomProblems(accessToken, count = 1) {
-  let problems = [];
+async function createProblemsArray(accessToken, problemQueryDataArr) {
+  let problemsResponceData = [];
   
-  for (let i = 0; i < count; i++) {
-    let temp = {
-      title: faker.random.words(2) + Date.now(),
-      content: faker.lorem.paragraph(),
-      company: "617a184bb95fa7cfcbf1b831",
-      jobTitle: faker.name.jobTitle()
-    };
-
-    await createProblem(accessToken, temp);
-    problems.push(temp);
+  for (let el of problemQueryDataArr) {
+    problemsResponceData.push(await createProblem(accessToken, el));
   }
 
-  return problems;
+  return problemsResponceData;
 }
 
+async function generateProblemsQueryData(count = 1, {
+  title,
+  content,
+  companyId = "617a184bb95fa7cfcbf1b831",   //Google
+  jobTitle    
+} = {}) {
+  title = title || (() => faker.random.words(1) + Date.now());
+  content =  content || (() => faker.lorem.paragraph());
+  //company = (company === "random") ?
+  jobTitle = jobTitle || (() => faker.name.jobTitle());
+
+  let problemsQueryData = [];
+
+  for (let i = 0; i < count; i++) {
+    problemsQueryData.push({
+      title: title(),
+      content: content(),
+      company: companyId,
+      jobTitle: jobTitle()
+    });
+  }
+
+  return problemsQueryData;
+}
+
+async function deleteProblem(accessToken, problemId) {
+  let requestData = JSON.stringify({
+    query: `mutation problemDelete ($problemId: ID!) {
+      problemDelete (problemId: $problemId)
+  }`,
+    variables: {"problemId": problemId}
+  });
+
+  try {
+    const { data } = await axios({
+      method: 'post',
+      url: baseUrl,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      data: requestData,
+    });
+
+    if (data.errors) {
+      throw new Error(
+        "Request error: " + data.errors[0].message.replace(/error:?/gi, "")
+      );
+    }
+
+    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    return data; 
+
+  } catch(error) { throw error; }
+}
+
+async function deleteProblemsArray(accessToken, problemIdArr) {
+  for (let el of problemIdArr) {
+    await deleteProblem(accessToken, el);
+  }
+}
+
+async function createCompany(accessToken, companyRequestData) {
+  let requestData = JSON.stringify({
+    query: `mutation companyCreate ($data: CompanyInput) {
+      companyCreate (data: $data) {
+        _id
+        title
+        description
+        image
+        link
+      }
+    }`,
+    variables: {"data": companyRequestData}
+  });
+
+  try {
+    const { data } = await axios({
+      method: 'post',
+      url: baseUrl,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      data: requestData
+    });
+
+    if (data.errors) {
+      throw new Error(
+        "Request error: " + data.errors[0].message.replace(/error:?/gi, "")
+      );
+    }
+
+    console.log("AXIOS 'Create company' response data:\n" + JSON.stringify(data, null, 2));
+    return data; 
+
+  } catch(error) { throw error; }
+}
+
+async function deleteCompany(accessToken, companyId) {
+  let requestData = JSON.stringify({
+    query: `mutation companyDelete ($companyId: ID!) {
+      companyDelete (companyId: $companyId)
+    }`,
+    variables: companyId
+  });
+
+  try {
+    const { data } = await axios({
+      method: 'post',
+      url: baseUrl,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      data: requestData
+    });
+
+    if (data.errors) {
+      throw new Error(
+        "Request error: " + data.errors[0].message.replace(/error:?/gi, "")
+      );
+    }
+
+    console.log("AXIOS 'Delete company' response data:\n" + JSON.stringify(data, null, 2));
+    return data; 
+
+  } catch(error) { throw error; }
+}
 
 // (async function() {
 //   let {data: {login: {accessToken}}} = await login("mimic@lala.com", "Qwe123Zxc^");
-//   console.log(accessToken);
-//   await createRandomProblems(accessToken, 5);
+
+//   let titleCallback = () => {
+//     let count = 0;
+//     let title = "Problem Title";
+//     return () => title += count++;
+//   };
+//   let problemsQueryData = await generateProblemsQueryData(
+//     5,
+//     {title: titleCallback()}
+//   );
+//   let problems = await createProblemsArray(accessToken, problemsQueryData);
+//   await deleteProblemsArray(
+//     accessToken,
+//     problems.map(el => el.data.problemCreate._id)
+//   );
+
+
+//   let {data: {companyCreate: {_id}}} = await createCompany(accessToken, {
+//     "title": "Title",
+//     "description": "x",
+//     "image": "x"
+//   });
+//   await deleteCompany(accessToken, _id);
 // })();
 
 
 module.exports = {
   login,
   createProblem,
-  createRandomProblems
+  createProblemsArray,
+  generateProblemsQueryData,
+  deleteProblem,
+  deleteProblemsArray,
+  createCompany,
+  deleteCompany
 };

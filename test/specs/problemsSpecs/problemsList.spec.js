@@ -3,38 +3,59 @@ const LoginData = require('../../../data/login.data');
 const ProblemsListPage = require('../../pageobjects/problemsPages/ProblemsList.page');
 const PublicationsPage = require('../../pageobjects/Publications.page');
 const axios = require('../../../methods/axios.APImethods');
-const faker = require('faker');
+//const faker = require('faker');
 
 describe("ProblemsList page tests", () => {
+
+  let accessToken;
+
   before(async () => {
     //browser.maximizeWindow();
     let {artyomCredentials: {email, password}} = LoginData;
     await LoginPage.open();
     await LoginPage.login(email, password);
     await PublicationsPage.pageTitle.waitForExist();
+
+    
+    accessToken = (await axios.login(email, password)).data.login.accessToken;
   });
 
   beforeEach(async () => {
     await ProblemsListPage.open();
   });
 
+  //working
   it('Open "New Problem" page', async () => {
     let {newProblemButton} = ProblemsListPage;
     await newProblemButton.click();
     await expect(browser).toHaveUrlContaining('problems/create');
   })
 
-  it("Problems pagination should be lower then equal to 10", async () => {
-    let {firstProblem} = ProblemsListPage;
-    await expect(firstProblem.$$('./../*')).toBeElementsArrayOfSize({lte: 10});
+  //working
+  it("Problems pagination should be by 10", async () => {
+    // let problemsData = await axios.createRandomProblems(
+    //   accessToken,
+    //   "617a184bb95fa7cfcbf1b831",
+    //   11
+    // );
+    // await browser.refresh();
+
+    await expect(ProblemsListPage.getFullProblemsList()).toBeElementsArrayOfSize(10);
+    await expect(await ProblemsListPage.paginationInfo).toHaveTextContaining("1–10");
+
+    // await axios.deleteProblemsArray(
+    //   accessToken,
+    //   problemsData.map(el => el.data.problemCreate._id)
+    // );
   });
 
+  //working
   it("PrevProblems button should be not clickable at first page", async () => {
-    let {prevPageButton} = ProblemsListPage;
-    await expect(await prevPageButton).not.toBeClickable();
-  })
+    await expect(await ProblemsListPage.prevPageButton).not.toBeClickable();
+  });
 
-  it.only("Goto next problems page", async () => {
+  //working
+  it("Goto next problems page", async () => {
     
     await expect(ProblemsListPage.nextPageButton).toBeClickable();
 
@@ -50,42 +71,40 @@ describe("ProblemsList page tests", () => {
     for (let id of idArr) {
       await expect(await $(`//div[@data-id="${id}"]`)).not.toBeExisting();
     }
+    await expect(ProblemsListPage.paginationInfo).toHaveTextContaining("11–20");
   });
 
+  it.only("Practice and debug test", async () => {
+    // let result = await ProblemsListPage.findProblem(
+    //   await ProblemsListPage.getFullProblemsList(),
+    //   "title",
+    //   "Colorado river or BBQ jazz 3"
+    // );
+    
+    // let result = await ProblemsListPage.getAllProblemsId(
+    //   problemsData.map(({title}) => title),
+    //    "title");
+    // console.log(result);
+    await ProblemsListPage.problemNameColumnTitle.click();
+    await expect(ProblemsListPage.problemNameColumnTitle.$('.//*[@data-testid="ArrowUpwardIcon"]')).toBeDisplayed();
+    await browser.pause(3000);
+  });
+
+  //working
   it("Goto previous problems page" , async () => {
-    let {firstProblem
-      , nextPageButton
-      , prevPageButton
-      , getProblemId
-    } = ProblemsListPage;
+    let prevPageProblemsArr = await ProblemsListPage.getFullProblemsList();
+    let prevPageIdArr = await Promise.all(
+      prevPageProblemsArr.map(async el => await ProblemsListPage.getProblemId(el))
+    );
 
-    await firstProblem.waitForExist();
-    let promiseArr = (await firstProblem.$$('./../*')).map(async el => await getProblemId(el));
-    let prevPageIdArr = await Promise.all(promiseArr);
-
-    await nextPageButton.click();
-    await prevPageButton.click();
-    await firstProblem.waitForExist();
+    await ProblemsListPage.nextPageButton.click();
+    await ProblemsListPage.prevPageButton.click();
+    await ProblemsListPage.getFullProblemsList();
 
     for (let id of prevPageIdArr) {
       await expect(await $(`//div[@data-id="${id}"]`)).toBeExisting();
     }
+    await expect(ProblemsListPage.paginationInfo).toHaveTextContaining("1–10");
   });
 
-  it("Simple tests", async () => {
-    await browser.url('http://www.xml2selenium.com/xpath/');
-
-    async function openToolbarMenu(locators, buttonName) {
-      let promisArr = locators.map(async el => [el, await el.getText()] );
-      console.log(promisArr);
-      let resultArr = await Promise.all(promisArr);
-      let [button] = resultArr.find( ([, text]) => {
-        return text.includes(buttonName);
-      });
-      return button;
-    }
-    let button = await openToolbarMenu(await $$('//nav/ul/li/a'), "Study");
-    //await expect(href.$('./a')).toBeClickable();
-    await expect(button).toHaveText("hjg");
-  });
 });
