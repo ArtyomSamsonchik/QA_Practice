@@ -7,6 +7,9 @@ class ProblemsPage extends Page {
   get pageTitle() {
     return $('//header//h6');
   }
+  get paginationInfo() {
+    return $('//p[contains(@class, "Pagination-displayedRows")]');
+  }
   get nextPageButton() {
     return $('//*[@title="Go to next page"]');
   }
@@ -19,17 +22,36 @@ class ProblemsPage extends Page {
   get problemsArr() {
     return $$('//div[@data-rowindex]');
   }
-  get paginationInfo() {
-    return $('//*[contains(@class, "displayedRows")]');
+  // get problemNameSortBtn() {
+  //   return $('//div[@data-field="Problem name"]//button[@aria-label="Sort"]');
+  // }
+  get problemNameColumnTitle() {
+    return $('//div[@data-field="Problem name"]');
   }
-  get example() {
-    return $$('//div[button[@aria-label="Select columns"]]/*');
+  get problemNameSortBtn() {
+    return this.problemNameColumnTitle.$('.//button[@aria-label="Sort"]');
   }
-  //---------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   async getProblemId(problem) {
     return await problem.getAttribute("data-id");
   }
   
+  async getProblemTitle(problem) {
+    return await problem.$('.//div[@data-field="Problem name"]').getText();
+  }
+
+  async getProblemCompany(problem) {
+    return await problem.$('.//div[@data-field="Company"]').getText();
+  }
+
+  async getProblemPosition(problem) {
+    return await problem.$('.//div[@data-field="Position"]').getText();
+  }
+
+  async getProblemCreator(problem) {
+    return await problem.$('.//div[@data-field="Creator"]').getText();
+  }
+
   async getFullProblemsList() {
     let result = [];
 
@@ -44,6 +66,56 @@ class ProblemsPage extends Page {
     });
     
     return result;
+  }
+
+  async findProblem(problemsArr, key, searchValue) {
+    let method = this[ new Array(
+      "getProblemTitle",
+      "getProblemCompany",
+      "getProblemPosition",
+      "getProblemCreator",
+      "getProblemId"
+      ).find(el => el.match(new RegExp(`${key}`, "i")) )
+    ];
+
+    let valuesArr = await Promise.all(
+      problemsArr.map(async el => await method(el))
+    );
+    
+    return problemsArr[valuesArr.findIndex(el => el === searchValue)];
+  }
+
+  async getAllProblemsId(valuesArr, key) {
+    let remaining = valuesArr.length;
+    let searchValue = valuesArr[0];
+    let maxPagesSkip = 5;
+    let idArr = [];
+    let problemsArr = await this.getFullProblemsList();
+
+    while(remaining) {
+      let problem = await this.findProblem(problemsArr, key, searchValue);
+
+      if (problem === undefined) {
+        await this.nextPageButton.click();
+        problemsArr = await this.getFullProblemsList();
+
+        maxPagesSkip--;
+        if (maxPagesSkip === 0) {
+          throw new Error(`Cannot find problem by "${key}": ${searchValue} by skipping 5 pages.
+          Assigned array of values ​​to search for:
+          ${valuesArr}`);
+        }
+
+        continue;
+      }
+
+      idArr.push(await this.getProblemId(problem));
+      remaining--;
+      searchValue = valuesArr[valuesArr.length - remaining];
+      maxPagesSkip = 5;
+    }
+
+    return idArr;
   }
 
   async open() {
