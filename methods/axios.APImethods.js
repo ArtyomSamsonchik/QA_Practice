@@ -50,7 +50,7 @@ async function login(email, password) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'login' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
     //Можно переделать проброс на более информативный, доваить имя ф-ции
   } catch(error) { throw error; }
@@ -96,40 +96,35 @@ async function createProblem(accessToken, problemQueryData) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'create problem' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
 
   } catch(error) { throw error; }
 }
 
 async function createProblemsArray(accessToken, problemQueryDataArr) {
-  let problemsResponceData = [];
+  let problemsResponseData = [];
   
   for (let el of problemQueryDataArr) {
-    problemsResponceData.push(await createProblem(accessToken, el));
+    problemsResponseData.push(await createProblem(accessToken, el));
   }
 
-  return problemsResponceData;
+  return problemsResponseData;
 }
 
 async function generateProblemsQueryData(count = 1, {
-  title,
-  content,
-  companyId = "617a184bb95fa7cfcbf1b831",   //Google
-  jobTitle    
+  title = () => faker.random.words(1) + Date.now(),
+  content = () => faker.lorem.paragraph(),
+  companyId = () => "617a184bb95fa7cfcbf1b831",   //Google
+  jobTitle = () => faker.name.jobTitle()    
 } = {}) {
-  title = title || (() => faker.random.words(1) + Date.now());
-  content =  content || (() => faker.lorem.paragraph());
-  //company = (company === "random") ?
-  jobTitle = jobTitle || (() => faker.name.jobTitle());
-
   let problemsQueryData = [];
 
   for (let i = 0; i < count; i++) {
     problemsQueryData.push({
       title: title(),
       content: content(),
-      company: companyId,
+      company: companyId(),
       jobTitle: jobTitle()
     });
   }
@@ -162,7 +157,7 @@ async function deleteProblem(accessToken, problemId) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'delete problem' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
 
   } catch(error) { throw error; }
@@ -216,7 +211,7 @@ async function deleteCompany(accessToken, companyId) {
     query: `mutation companyDelete ($companyId: ID!) {
       companyDelete (companyId: $companyId)
     }`,
-    variables: companyId
+    variables: {"companyId": companyId}
   });
 
   try {

@@ -22,14 +22,14 @@ class ProblemsPage extends Page {
   get problemsArr() {
     return $$('//div[@data-rowindex]');
   }
-  // get problemNameSortBtn() {
-  //   return $('//div[@data-field="Problem name"]//button[@aria-label="Sort"]');
-  // }
-  get problemNameColumnTitle() {
-    return $('//div[@data-field="Problem name"]');
-  }
   get problemNameSortBtn() {
-    return this.problemNameColumnTitle.$('.//button[@aria-label="Sort"]');
+    return $('//div[@data-field="Problem name"]//button[@aria-label="Sort"]');
+  }
+    get problemNameColumnTitle() {
+    return $('//div[@data-field="Problem name" and @role="columnheader"]');
+  }
+  get problemNameSortIcon() {
+    return this.problemNameSortBtn.$('./*[@data-testid]');
   }
   //----------------------------------------------------------------------------
   async getProblemId(problem) {

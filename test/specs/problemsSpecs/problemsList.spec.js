@@ -3,31 +3,56 @@ const LoginData = require('../../../data/login.data');
 const ProblemsListPage = require('../../pageobjects/problemsPages/ProblemsList.page');
 const PublicationsPage = require('../../pageobjects/Publications.page');
 const axios = require('../../../methods/axios.APImethods');
-//const faker = require('faker');
+const faker = require('faker');
+const expectChai = require('chai').expect;
 
 describe("ProblemsList page tests", () => {
 
   let accessToken;
+  let problemsResponseData;
 
-  before(async () => {
+  before("Get accessToken", async () => {
+    let {artyomCredentials: {email, password}} = LoginData;
+    accessToken = (await axios.login(email, password)).data.login.accessToken;
+  });
+  
+  before("Login and go to start page", async () => {
     //browser.maximizeWindow();
     let {artyomCredentials: {email, password}} = LoginData;
     await LoginPage.open();
     await LoginPage.login(email, password);
     await PublicationsPage.pageTitle.waitForExist();
-
-    
-    accessToken = (await axios.login(email, password)).data.login.accessToken;
+  });
+  
+  before("Ganerate problems with ascending titles", async () => {
+    let makeAscTitleCallback = () => {
+      let count = 0;
+      let title = "---" + faker.random.word();
+      return () => title + count++;
+    };
+    let problemsQueryData = await axios.generateProblemsQueryData(10, {
+      title: makeAscTitleCallback()
+    });
+    problemsResponseData = await axios.createProblemsArray(
+      accessToken,
+      problemsQueryData
+    );
   });
 
   beforeEach(async () => {
     await ProblemsListPage.open();
   });
 
+  after(async function deleteProblems() {
+    await axios.deleteProblemsArray(
+      accessToken,
+      problemsResponseData.map(el => el.data.problemCreate._id)
+    );
+  })
+
   //working
   it('Open "New Problem" page', async () => {
-    let {newProblemButton} = ProblemsListPage;
-    await newProblemButton.click();
+    await ProblemsListPage.newProblemButton.click();
     await expect(browser).toHaveUrlContaining('problems/create');
   })
 
@@ -41,7 +66,7 @@ describe("ProblemsList page tests", () => {
     // await browser.refresh();
 
     await expect(ProblemsListPage.getFullProblemsList()).toBeElementsArrayOfSize(10);
-    await expect(await ProblemsListPage.paginationInfo).toHaveTextContaining("1–10");
+    await expect(ProblemsListPage.paginationInfo).toHaveTextContaining("1–10");
 
     // await axios.deleteProblemsArray(
     //   accessToken,
@@ -75,19 +100,24 @@ describe("ProblemsList page tests", () => {
   });
 
   it.only("Practice and debug test", async () => {
-    // let result = await ProblemsListPage.findProblem(
-    //   await ProblemsListPage.getFullProblemsList(),
-    //   "title",
-    //   "Colorado river or BBQ jazz 3"
-    // );
-    
-    // let result = await ProblemsListPage.getAllProblemsId(
-    //   problemsData.map(({title}) => title),
-    //    "title");
-    // console.log(result);
+  
     await ProblemsListPage.problemNameColumnTitle.click();
-    await expect(ProblemsListPage.problemNameColumnTitle.$('.//*[@data-testid="ArrowUpwardIcon"]')).toBeDisplayed();
-    await browser.pause(3000);
+    let problemsArr = await ProblemsListPage.getFullProblemsList();
+    browser.pause(5000);
+
+    for (let i = 0; i < problemsArr.length - 1; i++) {
+      let prevTitle = await ProblemsListPage.getProblemTitle(problemsArr[i]);
+      let nextTitle = await ProblemsListPage.getProblemTitle(problemsArr[i + 1]);
+      expectChai(
+        prevTitle < nextTitle,
+        `${prevTitle} should be lower than ${nextTitle}`
+      ).to.be.true;
+    }
+
+    await expect(ProblemsListPage.problemNameSortIcon).toHaveAttribute(
+      'data-testid',
+      'ArrowUpwardIcon'
+    );
   });
 
   //working
