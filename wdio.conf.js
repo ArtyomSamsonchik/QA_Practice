@@ -21,7 +21,11 @@ exports.config = {
     // will be called from there.
     //
     specs: [
-        './test/specs/**/*.js'
+        //'./test/specs/**/*.js'
+        [
+            "./test/specs/problemsSpecs/problems.list.pagination.spec.js",
+            "./test/specs/problemsSpecs/problems.list.columns.sort.spec.js"
+        ]
     ],
     // Patterns to exclude.
     exclude: [
@@ -54,7 +58,7 @@ exports.config = {
         // maxInstances can get overwritten per capability. So if you have an in-house Selenium
         // grid with only 5 firefox instances available you can make sure that not more than
         // 5 instances get started at a time.
-        maxInstances: 5,
+        maxInstances: 1,
         //
         browserName: 'chrome',
         acceptInsecureCerts: true
@@ -186,7 +190,25 @@ exports.config = {
      * @param {Array.<String>} specs        List of spec file paths that are to be run
      * @param {Object}         browser      instance of created browser/device session
      */
-    // before: function (capabilities, specs) {
+    // before: async function (capabilities, specs, browser) {
+    //   if ( specs.some(el => el.includes('pagination')) ) {
+    //     console.log('++++++++++++++++++++++++++++++++++++++++++++++++++\n');
+    //     const LoginData = require('./data/login.data');
+    //     const axios = require('./methods/axios.APImethods');
+    //     const fsPromises = require('fs/promises');
+
+    //     let {artyomCredentials: {email, password}} = LoginData;
+    //     let accessToken = (await axios.login(email, password)).data.login.accessToken;
+    //     let problem = await axios.createProblem(
+    //       accessToken,
+    //       (await axios.generateProblemsQueryData())[0]
+    //     );
+
+    //     await axios.deleteProblem(
+    //       accessToken,
+    //       problem.data.problemCreate._id
+    //     );
+    //   }
     // },
     /**
      * Runs before a WebdriverIO command gets executed.
@@ -205,6 +227,10 @@ exports.config = {
      * Function to be executed before a test (in Mocha/Jasmine) starts.
      */
     // beforeTest: function (test, context) {
+    //     console.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    //     console.log(test);
+    //     console.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    //     console.log(context);
     // },
     /**
      * Hook that gets executed _before_ a hook within the suite starts (e.g. runs before calling
