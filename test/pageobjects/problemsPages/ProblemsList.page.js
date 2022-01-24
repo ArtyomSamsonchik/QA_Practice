@@ -22,14 +22,29 @@ class ProblemsPage extends Page {
   get problemsArr() {
     return $$('//div[@data-rowindex]');
   }
-  // get problemNameSortBtn() {
-  //   return $('//div[@data-field="Problem name"]//button[@aria-label="Sort"]');
-  // }
   get problemNameColumnTitle() {
-    return $('//div[@data-field="Problem name"]');
+    return $('//div[@data-field="Problem name" and @role="columnheader"]');
   }
-  get problemNameSortBtn() {
-    return this.problemNameColumnTitle.$('.//button[@aria-label="Sort"]');
+  get problemNameSortIcon() {
+    return this.problemNameColumnTitle.$('.//button[@aria-label="Sort"]/*[@data-testid]');
+  }
+  get positionColumnTitle() {
+    return $('//div[@data-field="Position" and @role="columnheader"]');
+  }
+  get companyColumnTitle() {
+    return $('//div[@data-field="Company" and @role="columnheader"]');
+  }
+  get companySortIcon() {
+    return this.companyColumnTitle.$('.//button[@aria-label="Sort"]/*[@data-testid]');
+  }
+  get toolbarFiltersBtn() {
+    return $('//button[@aria-label="Show filters"]');
+  }
+  get filtersFormColumnsBox() {
+    return $('//div[label[text()="Columns"]]//select');
+  }
+  get filtersFormOperatorsBox() {
+    return $('//div[label[text()="Operators"]]//select[count(option)>2]');
   }
   //----------------------------------------------------------------------------
   async getProblemId(problem) {
@@ -63,6 +78,9 @@ class ProblemsPage extends Page {
         result = currentArr;
         return false;
       }
+    }, {
+      timeout: 10000,
+      timeoutMsg: "Couldn\'t wait for the full problems list in 10 sec"
     });
     
     return result;

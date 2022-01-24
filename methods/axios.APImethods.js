@@ -50,7 +50,7 @@ async function login(email, password) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'login' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
     //Можно переделать проброс на более информативный, доваить имя ф-ции
   } catch(error) { throw error; }
@@ -96,45 +96,43 @@ async function createProblem(accessToken, problemQueryData) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'create problem' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
 
   } catch(error) { throw error; }
 }
 
-async function createProblemsArray(accessToken, problemQueryDataArr) {
-  let problemsResponceData = [];
-  
-  for (let el of problemQueryDataArr) {
-    problemsResponceData.push(await createProblem(accessToken, el));
+async function createProblemsArray(
+  accessToken,
+  problemsResponseDataArr,
+  problemsQueryDataArr
+) {  
+  for (let i = 0; i < problemsQueryDataArr.length; i++) {
+    console.log(`Creating ${i + 1}-th problem of ${problemsQueryDataArr.length}:`);
+    problemsResponseDataArr.push(
+      await createProblem(accessToken, problemsQueryDataArr[i])
+    );
   }
-
-  return problemsResponceData;
 }
 
 async function generateProblemsQueryData(count = 1, {
-  title,
-  content,
-  companyId = "617a184bb95fa7cfcbf1b831",   //Google
-  jobTitle    
+  title = () => faker.random.words(1) + " " + Date.now(),
+  content = () => faker.lorem.paragraph(),
+  companyId = () => "617a184bb95fa7cfcbf1b831",   //Google
+  jobTitle = () => faker.name.jobTitle()    
 } = {}) {
-  title = title || (() => faker.random.words(1) + Date.now());
-  content =  content || (() => faker.lorem.paragraph());
-  //company = (company === "random") ?
-  jobTitle = jobTitle || (() => faker.name.jobTitle());
-
-  let problemsQueryData = [];
+  let problemsQueryDataArr = [];
 
   for (let i = 0; i < count; i++) {
-    problemsQueryData.push({
-      title: title(),
-      content: content(),
-      company: companyId,
-      jobTitle: jobTitle()
+    problemsQueryDataArr.push({
+      title: title(i),
+      content: content(i),
+      company: companyId(i),
+      jobTitle: jobTitle(i)
     });
   }
 
-  return problemsQueryData;
+  return problemsQueryDataArr;
 }
 
 async function deleteProblem(accessToken, problemId) {
@@ -162,15 +160,16 @@ async function deleteProblem(accessToken, problemId) {
       );
     }
 
-    console.log("AXIOS response data:\n" + JSON.stringify(data, null, 2));
+    console.log("AXIOS 'delete problem' response data:\n" + JSON.stringify(data, null, 2));
     return data; 
 
   } catch(error) { throw error; }
 }
 
-async function deleteProblemsArray(accessToken, problemIdArr) {
-  for (let el of problemIdArr) {
-    await deleteProblem(accessToken, el);
+async function deleteProblemsArray(accessToken, problemsIdArr) {
+  for (let i = 0; i < problemsIdArr.length; i++) {
+    console.log(`Deleting ${i + 1}-th problem of ${problemsIdArr.length}:`);
+    await deleteProblem(accessToken, problemsIdArr[i]);
   }
 }
 
@@ -211,12 +210,42 @@ async function createCompany(accessToken, companyRequestData) {
   } catch(error) { throw error; }
 }
 
+async function createCompaniesArray(
+  accessToken,
+  companiesResponseDataArr,
+  companiesRequestDataArr
+) {
+  for (let i = 0; i < companiesRequestDataArr.length; i++) {
+    console.log(`Creating ${i + 1}-th company of ${companiesRequestDataArr.length}:`);
+    companiesResponseDataArr.push(
+      await createCompany(accessToken, companiesRequestDataArr[i])
+    );
+  }
+}
+
+async function generateCompaniesRequestData(count = 1, {
+  title = () => faker.company.companyName(0),
+  description = () => faker.lorem.sentence(5),
+  image = () => faker.image.imageUrl(640, 480, 'business')
+} = {}) {
+  let companiesRequestData = [];
+
+  for (let i = 0; i < count; i++) {
+    companiesRequestData.push({
+      title: title(i),
+      description: description(i)
+    });
+  }
+
+  return companiesRequestData;
+}
+
 async function deleteCompany(accessToken, companyId) {
   let requestData = JSON.stringify({
     query: `mutation companyDelete ($companyId: ID!) {
       companyDelete (companyId: $companyId)
     }`,
-    variables: companyId
+    variables: {"companyId": companyId}
   });
 
   try {
@@ -240,6 +269,13 @@ async function deleteCompany(accessToken, companyId) {
     return data; 
 
   } catch(error) { throw error; }
+}
+
+async function deleteCompaniesArray(accessToken, companiesIdArr) {
+  for (let i = 0; i < companiesIdArr.length; i++) {
+    console.log(`Deleting ${i+ 1}-th company of ${companiesIdArr.length}:`);
+    await deleteCompany(accessToken, companiesIdArr[i]);
+  }
 }
 
 // (async function() {
@@ -278,5 +314,8 @@ module.exports = {
   deleteProblem,
   deleteProblemsArray,
   createCompany,
-  deleteCompany
+  createCompaniesArray,
+  generateCompaniesRequestData,
+  deleteCompany,
+  deleteCompaniesArray
 };
